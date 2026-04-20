@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Accessible Gamified Quiz System</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:ital,wght@0,700;0,900;1,800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="/static/style.css"/>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="brand">AGQS <em>·</em> SHS</div>
+  <div class="topbar-r">
+    <span class="role-badge" id="role-badge"></span>
+    <button class="logout-btn" id="logout-btn" onclick="logout()">← Log Out</button>
+  </div>
+</div>
+
+<!-- ══ PORTAL SELECT ══ -->
+<div class="screen active" id="screen-portal">
+  <div class="portal-hero">
+    <div class="eyebrow">Senior High School · Core Subjects</div>
+    <h1 class="serif">Accessible Gamified<br>Quiz System</h1>
+    <p>A classroom quiz platform with Teacher and Student portals. Choose yours to continue.</p>
+  </div>
+  <div class="portal-grid">
+    <div class="portal-card tc" onclick="goLogin('teacher')">
+      <div class="p-icon">👩‍🏫</div>
+      <h2>Teacher</h2>
+      <p>View student results, track class performance, and monitor subject leaderboards.</p>
+      <div class="p-chip">Password Protected</div>
+    </div>
+    <div class="portal-card st" onclick="goLogin('student')">
+      <div class="p-icon">🎓</div>
+      <h2>Student</h2>
+      <p>Take quizzes at your chosen difficulty, track your streak and personal score history.</p>
+      <div class="p-chip">Open Access</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TEACHER LOGIN ══ -->
+<div class="screen" id="screen-teacher-login">
+  <div class="login-wrap">
+    <div class="l-icon">🔐</div>
+    <h2>Teacher Login</h2>
+    <p class="l-sub">Enter your credentials to access the dashboard.</p>
+    <div class="field-wrap">
+      <label>Username</label>
+      <input id="t-user" class="field-input" type="text" placeholder="teacher" autocomplete="off"/>
+    </div>
+    <div class="field-wrap">
+      <label>Password</label>
+      <input id="t-pass" class="field-input" type="password" placeholder="Enter password"
+        onkeydown="if(event.key==='Enter')teacherLogin()"/>
+    </div>
+    <div class="login-hint">Default → username: <strong>teacher</strong> · password: <strong>teacher123</strong></div>
+    <div class="error-msg" id="t-error">❌ Incorrect username or password.</div>
+    <div class="btn-row">
+      <button class="btn ghost" onclick="showScreen('screen-portal')">← Back</button>
+      <button class="btn" onclick="teacherLogin()">Login</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ STUDENT LOGIN ══ -->
+<div class="screen" id="screen-student-login">
+  <div class="login-wrap">
+    <div class="l-icon">🎓</div>
+    <h2>Student Portal</h2>
+    <p class="l-sub">Enter your name to begin. Your scores will be saved automatically.</p>
+    <div class="field-wrap">
+      <label>Full Name</label>
+      <input id="s-name" class="field-input" type="text" placeholder="e.g. Maria Santos" maxlength="40"
+        onkeydown="if(event.key==='Enter')studentLogin()"/>
+    </div>
+    <div class="field-wrap">
+      <label>Section / Strand <span style="color:var(--ink3);font-weight:400">(optional)</span></label>
+      <input id="s-section" class="field-input" type="text" placeholder="e.g. STEM-A" maxlength="30"/>
+    </div>
+    <div class="error-msg" id="s-error">❌ Please enter your name to continue.</div>
+    <div class="btn-row">
+      <button class="btn ghost-blue" onclick="showScreen('screen-portal')">← Back</button>
+      <button class="btn blue" onclick="studentLogin()">Enter</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══ TEACHER DASHBOARD ══ -->
+<div class="screen" id="screen-teacher">
+  <div class="dash-header">
+    <h2>Teacher Dashboard</h2>
+    <p>Overview of all student quiz activity</p>
+  </div>
+  <div class="dash-stats">
+    <div class="ds-box"><div class="ds-n" id="ds-total">0</div><div class="ds-l">Total Attempts</div></div>
+    <div class="ds-box"><div class="ds-n" id="ds-students">0</div><div class="ds-l">Unique Students</div></div>
+    <div class="ds-box"><div class="ds-n" id="ds-avg">—</div><div class="ds-l">Class Average</div></div>
+    <div class="ds-box"><div class="ds-n" id="ds-top">—</div><div class="ds-l">Top Score</div></div>
+  </div>
+  <div class="section-head"><h3>Subject Performance</h3></div>
+  <div class="perf-grid" id="perf-grid"></div>
+  <div class="section-head">
+    <h3>Student Leaderboard</h3>
+    <button class="btn sm red" onclick="clearAllRecords()">🗑 Clear All</button>
+  </div>
+  <div class="filter-tabs">
+    <div class="ftab active" onclick="filterLB('all',this)">All</div>
+    <div class="ftab" onclick="filterLB('english',this)">English</div>
+    <div class="ftab" onclick="filterLB('reading',this)">Reading &amp; Writing</div>
+    <div class="ftab" onclick="filterLB('science',this)">Science</div>
+    <div class="ftab" onclick="filterLB('math',this)">Math</div>
+  </div>
+  <div class="leaderboard" id="leaderboard"></div>
+</div>
+
+<!-- ══ STUDENT HOME ══ -->
+<div class="screen" id="screen-student">
+  <div class="student-hero">
+    <h2 id="st-welcome">Welcome!</h2>
+    <p id="st-sec">Choose a subject below to start your quiz.</p>
+  </div>
+  <div class="sec-label">Select Subject</div>
+  <div class="subject-grid">
+    <div class="subject-card" onclick="selectSubject(this,'english')" tabindex="0" role="button">
+      <span class="s-best" id="sb-english"></span>
+      <div class="s-icon">📝</div><h3>English</h3><p>Grammar, vocabulary, sentence structure</p>
+    </div>
+    <div class="subject-card" onclick="selectSubject(this,'reading')" tabindex="0" role="button">
+      <span class="s-best" id="sb-reading"></span>
+      <div class="s-icon">📖</div><h3>Reading &amp; Writing</h3><p>Rhetoric, composition, academic text</p>
+    </div>
+    <div class="subject-card" onclick="selectSubject(this,'science')" tabindex="0" role="button">
+      <span class="s-best" id="sb-science"></span>
+      <div class="s-icon">🔬</div><h3>Science</h3><p>Earth &amp; Life Science fundamentals</p>
+    </div>
+    <div class="subject-card" onclick="selectSubject(this,'math')" tabindex="0" role="button">
+      <span class="s-best" id="sb-math"></span>
+      <div class="s-icon">📐</div><h3>Mathematics</h3><p>Functions, algebra, rational expressions</p>
+    </div>
+  </div>
+  <button class="btn blue" id="quiz-next-btn" onclick="goDiffScreen()" disabled>Choose Difficulty →</button>
+  <div class="divider"></div>
+  <div class="section-head"><h3>My Score History</h3></div>
+  <div class="history-list" id="history-list">
+    <div class="lb-empty" style="font-size:.82rem">No quizzes taken yet. Start one above!</div>
+  </div>
+</div>
+
+<!-- ══ DIFFICULTY CHOOSER ══ -->
+<div class="screen" id="screen-difficulty">
+  <div class="diff-hero">
+    <div class="back-link" onclick="backToSubjects()">← Back to Subjects</div>
+    <div class="diff-subject-tag" id="diff-subject-tag">📝 English</div>
+    <h2>Choose Your Difficulty</h2>
+    <p>Pick the level that fits your preparation. You can always retry at any level.</p>
+  </div>
+  <div class="diff-cards">
+    <div class="diff-card easy-card" onclick="selectDiff(this,'easy')" tabindex="0" role="button">
+      <div class="dc-icon">🟢</div>
+      <div class="dc-body">
+        <div class="dc-title">Easy</div>
+        <div class="dc-desc">Only straightforward questions. Great for first-timers or reviewing basics before an exam.</div>
+        <div class="dc-pills">
+          <span class="dc-pill green">Easy questions only</span>
+          <span class="dc-pill blue">20 seconds per question</span>
+        </div>
+      </div>
+      <div class="dc-check" id="dc-easy">✓</div>
+    </div>
+    <div class="diff-card medium-card" onclick="selectDiff(this,'medium')" tabindex="0" role="button">
+      <div class="dc-icon">🟡</div>
+      <div class="dc-body">
+        <div class="dc-title">Average</div>
+        <div class="dc-desc">A balanced mix of easy and medium questions. The standard SHS quiz experience.</div>
+        <div class="dc-pills">
+          <span class="dc-pill green">Easy</span>
+          <span class="dc-pill gold">+ Medium questions</span>
+          <span class="dc-pill blue">15 seconds per question</span>
+        </div>
+      </div>
+      <div class="dc-check" id="dc-medium">✓</div>
+    </div>
+    <div class="diff-card hard-card" onclick="selectDiff(this,'hard')" tabindex="0" role="button">
+      <div class="dc-icon">🔴</div>
+      <div class="dc-body">
+        <div class="dc-title">Hard</div>
+        <div class="dc-desc">All question types included — easy, medium, and hard. Shorter timer. For the prepared and the brave.</div>
+        <div class="dc-pills">
+          <span class="dc-pill green">Easy</span>
+          <span class="dc-pill gold">Medium</span>
+          <span class="dc-pill red">+ Hard questions</span>
+          <span class="dc-pill blue">10 seconds per question</span>
+        </div>
+      </div>
+      <div class="dc-check" id="dc-hard">✓</div>
+    </div>
+  </div>
+  <button class="btn blue" id="diff-start-btn" onclick="startQuiz()" disabled>Select a Difficulty to Start</button>
+</div>
+
+<!-- ══ QUIZ ══ -->
+<div class="screen" id="screen-quiz">
+  <div class="quiz-top">
+    <div class="q-meta">
+      <span class="q-lbl" id="q-counter">Question 1 / 10</span>
+      <span class="q-sbj" id="q-subj">—</span>
+    </div>
+    <div class="streak-pill" id="streak-pill">🔥 <span id="streak-num">0</span> in a row!</div>
+    <div class="timer-col">
+      <div class="t-num" id="t-num">15</div>
+      <div class="t-lbl">sec</div>
+    </div>
+  </div>
+  <div class="prog-track"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  <div id="diff-wrap"></div>
+  <div class="q-card"><div class="qn" id="qn">Q1</div><div class="qt" id="qt">Loading…</div></div>
+  <div class="choices-list" id="choices-list"></div>
+  <div class="fb-bar" id="fb-bar"><span id="fb-icon"></span><span id="fb-text"></span></div>
+</div>
+
+<!-- ══ RESULT ══ -->
+<div class="screen" id="screen-result">
+  <div class="res-card">
+    <div class="res-lbl" id="res-lbl">—</div>
+    <div class="res-diff-badge" id="res-diff-badge">🟢 Easy</div>
+    <div class="score-ring"><span class="srn" id="res-score">0</span><span class="srd" id="res-den">/ 10</span></div>
+    <div class="grade-t" id="res-grade">—</div>
+    <div class="grade-s" id="res-msg">—</div>
+  </div>
+  <div class="res-stats">
+    <div class="rs-box g"><div class="rsn" id="rs-c">0</div><div class="rsl">Correct</div></div>
+    <div class="rs-box r"><div class="rsn" id="rs-w">0</div><div class="rsl">Wrong</div></div>
+    <div class="rs-box y"><div class="rsn" id="rs-s">0</div><div class="rsl">Best Streak</div></div>
+  </div>
+  <div class="rev-wrap">
+    <div class="rev-toggle" id="rev-toggle" onclick="toggleReview()">
+      <span>📋 Review Your Answers</span><span class="arr">▼</span>
+    </div>
+    <div class="rev-list" id="rev-list"></div>
+  </div>
+  <div class="btn-row">
+    <button class="btn ghost-blue" onclick="backToStudentHome()">← Back to Subjects</button>
+    <button class="btn blue" onclick="retryQuiz()">Try Again</button>
+  </div>
+</div>
+
+<!-- ══ JAVASCRIPT ══ -->
+<script>
+/* ── Questions are served from Python via a fetch call ── */
+const SNAMES={english:"English",reading:"Reading & Writing",science:"Science",math:"Mathematics"};
+const SICONS={english:"📝",reading:"📖",science:"🔬",math:"📐"};
+const DNAMES={easy:"Easy",medium:"Average",hard:"Hard"};
+const DICONS={easy:"🟢",medium:"🟡",hard:"🔴"};
+const DTIMER={easy:20,medium:15,hard:10};
+const DPOOL={easy:["easy"],medium:["easy","medium"],hard:["easy","medium","hard"]};
+const LETTERS=['A','B','C','D'];
+const TOTAL=10;
+
+/* Embedded questions (served from Flask via Jinja2) */
+const QB = {{ questions|tojson }};
+
+let role=null, studentName='', studentSection='';
+let selectedSubject=null, selectedDiff=null;
+let questions=[], currentQ=0, score=0, wrongCount=0, streak=0, bestStreak=0;
+let timerInterval=null, timeLeft=15, quizTimer=15;
+let reviewLog=[], allScores=[];
+
+/* ── AUTH ── */
+function goLogin(r){ showScreen(r==='teacher'?'screen-teacher-login':'screen-student-login') }
+
+async function teacherLogin(){
+  const username=document.getElementById('t-user').value.trim();
+  const password=document.getElementById('t-pass').value;
+  const err=document.getElementById('t-error');
+  try{
+    const res=await fetch('/api/login/teacher',{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({username,password})
+    });
+    const data=await res.json();
+    if(data.success){
+      err.style.display='none';role='teacher';
+      setBadge('teacher','👩‍🏫 Teacher');
+      await loadTeacherDash();
+      showScreen('screen-teacher');
+    }else{ err.style.display='block' }
+  }catch(e){ err.style.display='block' }
+}
+
+function studentLogin(){
+  const n=document.getElementById('s-name').value.trim();
+  const err=document.getElementById('s-error');
+  if(!n){err.style.display='block';return}
+  err.style.display='none';
+  studentName=n; studentSection=document.getElementById('s-section').value.trim();
+  role='student'; setBadge('student','🎓 Student');
+  loadStudentHome(); showScreen('screen-student');
+}
+
+function setBadge(r,txt){
+  const b=document.getElementById('role-badge');
+  b.textContent=txt; b.className='role-badge '+r; b.style.display='inline-block';
+  document.getElementById('logout-btn').style.display='inline-block';
+}
+
+function logout(){
+  role=null; selectedSubject=null; selectedDiff=null; clearInterval(timerInterval);
+  document.getElementById('role-badge').style.display='none';
+  document.getElementById('logout-btn').style.display='none';
+  ['t-user','t-pass','s-name','s-section'].forEach(id=>document.getElementById(id).value='');
+  showScreen('screen-portal');
+}
+
+/* ── TEACHER DASHBOARD ── */
+async function loadTeacherDash(){
+  const res=await fetch('/api/scores');
+  allScores=await res.json();
+  const R=allScores;
+  const students=new Set(R.map(r=>r.name)).size;
+  const avg=R.length?(Math.round(R.reduce((s,r)=>s+r.score,0)/R.length*10)/10):'—';
+  const top=R.length?Math.max(...R.map(r=>r.score)):'—';
+  document.getElementById('ds-total').textContent=R.length;
+  document.getElementById('ds-students').textContent=students;
+  document.getElementById('ds-avg').textContent=R.length?avg+'/10':'—';
+  document.getElementById('ds-top').textContent=R.length?top+'/10':'—';
+  const pg=document.getElementById('perf-grid'); pg.innerHTML='';
+  Object.keys(SNAMES).forEach(s=>{
+    const sub=R.filter(r=>r.subject===s);
+    const a2=sub.length?Math.round(sub.reduce((acc,r)=>acc+r.score,0)/sub.length*10)/10:0;
+    const pct=sub.length?a2/10*100:0;
+    const card=document.createElement('div'); card.className='perf-card';
+    card.innerHTML=`<h4>${SICONS[s]} ${SNAMES[s]}</h4>
+      <div class="perf-bar-track"><div class="perf-bar-fill" style="width:${pct}%"></div></div>
+      <div class="perf-nums"><span class="pn-l">${sub.length} attempt${sub.length!==1?'s':''}</span><span class="pn-r">${sub.length?'Avg '+a2+'/10':'No data'}</span></div>`;
+    pg.appendChild(card);
+  });
+  renderLB('all');
+}
+
+function filterLB(subj,el){
+  document.querySelectorAll('.ftab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active'); renderLB(subj);
+}
+
+function renderLB(filter){
+  let R=[...allScores];
+  if(filter!=='all') R=R.filter(r=>r.subject===filter);
+  R.sort((a,b)=>b.score-a.score||(new Date(b.date)-new Date(a.date)));
+  const lb=document.getElementById('leaderboard'); lb.innerHTML='';
+  if(!R.length){lb.innerHTML='<div class="lb-empty">No records yet for this filter.</div>';return}
+  R.slice(0,20).forEach((r,i)=>{
+    const rank=i+1;
+    const rowCls='lb-row'+(rank===1?' gold-row':rank===2?' silver-row':rank===3?' bronze-row':'');
+    const rkCls='lb-rank'+(rank===1?' r1':rank===2?' r2':rank===3?' r3':'');
+    const medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':rank;
+    const pct=r.score/10*100;
+    const pctCls=pct>=75?'pct-hi':pct>=60?'pct-md':'pct-lo';
+    const diff=r.difficulty||'easy';
+    const dateStr=new Date(r.date).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
+    const div=document.createElement('div'); div.className=rowCls;
+    div.innerHTML=`
+      <div class="${rkCls}">${medal}</div>
+      <div class="lb-info">
+        <div class="lb-name">${esc(r.name)}</div>
+        <div class="lb-meta">${SICONS[r.subject]||''} ${SNAMES[r.subject]||r.subject}
+          ${r.section?'· '+esc(r.section):''}
+          · <span class="diff-tag-sm ${diff}">${DICONS[diff]} ${DNAMES[diff]}</span>
+          · ${dateStr}</div>
+      </div>
+      <div class="lb-score">
+        <div class="ls-num">${r.score}</div><div class="ls-den">/ 10</div>
+        <div class="ls-pct ${pctCls}">${pct}%</div>
+      </div>`;
+    lb.appendChild(div);
+  });
+}
+
+async function clearAllRecords(){
+  if(!confirm('Clear ALL student records? This cannot be undone.'))return;
+  await fetch('/api/scores',{method:'DELETE'});
+  allScores=[];
+  loadTeacherDash();
+}
+
+/* ── STUDENT HOME ── */
+async function loadStudentHome(){
+  const res=await fetch('/api/scores');
+  const R=await res.json();
+  document.getElementById('st-welcome').textContent='Welcome, '+studentName+'! 👋';
+  document.getElementById('st-sec').textContent=studentSection
+    ?'Section: '+studentSection+' · Pick a subject below.'
+    :'Pick a subject below to start your quiz.';
+  const mine=R.filter(r=>r.name.toLowerCase()===studentName.toLowerCase());
+  Object.keys(SNAMES).forEach(s=>{
+    const el=document.getElementById('sb-'+s);
+    const sub=mine.filter(r=>r.subject===s);
+    if(sub.length){const best=Math.max(...sub.map(r=>r.score));el.textContent='Best: '+best+'/10';el.style.display='block'}
+    else el.style.display='none';
+  });
+  const hl=document.getElementById('history-list'); hl.innerHTML='';
+  const recent=mine.slice().reverse().slice(0,6);
+  if(!recent.length){hl.innerHTML='<div class="lb-empty" style="font-size:.82rem">No quizzes taken yet. Start one above!</div>';return}
+  recent.forEach(r=>{
+    const diff=r.difficulty||'easy';
+    const d=document.createElement('div'); d.className='hist-row';
+    const dateStr=new Date(r.date).toLocaleDateString('en-PH',{month:'short',day:'numeric'});
+    d.innerHTML=`<div class="hist-icon">${SICONS[r.subject]||'📚'}</div>
+      <div class="hist-info">
+        <div class="hist-subj">${SNAMES[r.subject]}</div>
+        <div class="hist-date">${dateStr} <span class="diff-tag-sm ${diff}">${DICONS[diff]} ${DNAMES[diff]}</span> · 🔥 ${r.bestStreak}</div>
+      </div>
+      <div class="hist-score">${r.score}/10</div>`;
+    hl.appendChild(d);
+  });
+}
+
+function selectSubject(el,subj){
+  document.querySelectorAll('.subject-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected'); selectedSubject=subj;
+  const btn=document.getElementById('quiz-next-btn');
+  btn.disabled=false; btn.textContent='Choose Difficulty for '+SNAMES[subj]+' →';
+}
+document.querySelectorAll('.subject-card').forEach(c=>{
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')c.click()});
+});
+
+/* ── DIFFICULTY ── */
+function goDiffScreen(){
+  if(!selectedSubject)return;
+  selectedDiff=null;
+  document.querySelectorAll('.diff-card').forEach(c=>c.classList.remove('selected'));
+  ['easy','medium','hard'].forEach(d=>{document.getElementById('dc-'+d).style.opacity='0'});
+  document.getElementById('diff-start-btn').disabled=true;
+  document.getElementById('diff-start-btn').textContent='Select a Difficulty to Start';
+  document.getElementById('diff-subject-tag').textContent=SICONS[selectedSubject]+' '+SNAMES[selectedSubject];
+  showScreen('screen-difficulty');
+}
+
+function selectDiff(el,diff){
+  document.querySelectorAll('.diff-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected'); selectedDiff=diff;
+  ['easy','medium','hard'].forEach(d=>{document.getElementById('dc-'+d).style.opacity='0'});
+  document.getElementById('dc-'+diff).style.opacity='1';
+  const btn=document.getElementById('diff-start-btn');
+  btn.disabled=false; btn.textContent='Start '+DNAMES[diff]+' Quiz →';
+}
+document.querySelectorAll('.diff-card').forEach(c=>{
+  c.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' ')c.click()});
+});
+
+function backToSubjects(){ showScreen('screen-student') }
+
+/* ── QUIZ ── */
+function startQuiz(){
+  if(!selectedSubject||!selectedDiff)return;
+  const pool=QB[selectedSubject].filter(q=>DPOOL[selectedDiff].includes(q.d));
+  questions=shuffle([...pool]).slice(0,Math.min(TOTAL,pool.length));
+  quizTimer=DTIMER[selectedDiff];
+  currentQ=0; score=0; wrongCount=0; streak=0; bestStreak=0; reviewLog=[];
+  document.getElementById('q-subj').textContent=SNAMES[selectedSubject]+' · '+DNAMES[selectedDiff];
+  showScreen('screen-quiz'); loadQ();
+}
+
+function loadQ(){
+  const d=questions[currentQ];
+  document.getElementById('q-counter').textContent=`Question ${currentQ+1} / ${questions.length}`;
+  document.getElementById('qn').textContent='Q'+(currentQ+1);
+  document.getElementById('qt').textContent=d.q;
+  document.getElementById('prog-fill').style.width=`${currentQ/questions.length*100}%`;
+const diffLabels={'easy':'🟢 Easy','medium':'🟡 Average','hard':'🔴 Hard'};
+document.getElementById('diff-wrap').innerHTML=`<span class="diff-pill ${d.d}">${diffLabels[d.d]}</span>`;  const sp=document.getElementById('streak-pill');
+  if(streak>=2){sp.classList.add('show');document.getElementById('streak-num').textContent=streak}else sp.classList.remove('show');
+  const list=document.getElementById('choices-list'); list.innerHTML='';
+  d.c.forEach((ch,i)=>{
+    const btn=document.createElement('button'); btn.className='choice-btn';
+    btn.innerHTML=`<span class="cl">${LETTERS[i]}</span>${ch}`;
+    btn.onclick=()=>answer(i,d.a,btn,list,d);
+    list.appendChild(btn);
+  });
+  document.getElementById('fb-bar').className='fb-bar';
+  startTimer();
+}
+
+function answer(chosen,correct,clickedBtn,list,d){
+  clearInterval(timerInterval);
+  list.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+  const ok=chosen===correct;
+  if(ok){score++;streak++;if(streak>bestStreak)bestStreak=streak;clickedBtn.classList.add('correct');showFB('ok','✅','Correct! Well done.');}
+  else{wrongCount++;streak=0;clickedBtn.classList.add('wrong');list.querySelectorAll('.choice-btn')[correct].classList.add('correct');showFB('bad','❌','Wrong. Correct: '+d.c[correct]);}
+  reviewLog.push({q:d.q,c:d.c,correct,chosen,ok});
+  setTimeout(()=>{currentQ++;currentQ<questions.length?loadQ():showResults();},1800);
+}
+
+function showFB(type,icon,msg){
+  const el=document.getElementById('fb-bar'); el.className='fb-bar '+type+' show';
+  document.getElementById('fb-icon').textContent=icon;
+  document.getElementById('fb-text').textContent=msg;
+}
+
+function startTimer(){
+  timeLeft=quizTimer; updateTimer(); clearInterval(timerInterval);
+  timerInterval=setInterval(()=>{timeLeft--;updateTimer();if(timeLeft<=0){clearInterval(timerInterval);timeUp();}},1000);
+}
+function updateTimer(){
+  const el=document.getElementById('t-num'); el.textContent=timeLeft;
+  const warn=Math.floor(quizTimer*0.4), crit=Math.floor(quizTimer*0.2);
+  el.className='t-num'+(timeLeft<=crit?' crit':timeLeft<=warn?' warn':'');
+}
+function timeUp(){
+  const list=document.getElementById('choices-list');
+  list.querySelectorAll('.choice-btn').forEach(b=>b.disabled=true);
+  const d=questions[currentQ];
+  list.querySelectorAll('.choice-btn')[d.a].classList.add('correct');
+  wrongCount++; streak=0; showFB('tup','⏰',"Time's up! Correct: "+d.c[d.a]);
+  reviewLog.push({q:d.q,c:d.c,correct:d.a,chosen:-1,ok:false});
+  setTimeout(()=>{currentQ++;currentQ<questions.length?loadQ():showResults();},1800);
+}
+
+/* ── RESULTS ── */
+async function showResults(){
+  clearInterval(timerInterval);
+  document.getElementById('prog-fill').style.width='100%';
+  await fetch('/api/scores',{
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({name:studentName,section:studentSection,subject:selectedSubject,difficulty:selectedDiff,score,bestStreak})
+  });
+  const total=questions.length;
+  const pct=score/total*100;
+  let grade,msg;
+  if(pct>=90){grade='Outstanding 🏆';msg='Exceptional performance! You are quiz-ready.'}
+  else if(pct>=75){grade='Proficient 🌟';msg='Great work! Keep pushing for a perfect score.'}
+  else if(pct>=60){grade='Approaching ✍️';msg='Good effort. Review your missed items and try again.'}
+  else{grade='Needs Review 📚';msg="Don't give up — consistent practice leads to mastery."}
+  document.getElementById('res-lbl').textContent=studentName+' · '+SNAMES[selectedSubject];
+  const badge=document.getElementById('res-diff-badge');
+  badge.textContent=DICONS[selectedDiff]+' '+DNAMES[selectedDiff]+' Mode';
+  badge.className='res-diff-badge '+selectedDiff;
+  document.getElementById('res-score').textContent=score;
+  document.getElementById('res-den').textContent='/ '+total;
+  document.getElementById('res-grade').textContent=grade;
+  document.getElementById('res-msg').textContent=msg;
+  document.getElementById('rs-c').textContent=score;
+  document.getElementById('rs-w').textContent=wrongCount;
+  document.getElementById('rs-s').textContent=bestStreak;
+  const rl=document.getElementById('rev-list'); rl.innerHTML='';
+  reviewLog.forEach((it,i)=>{
+    const div=document.createElement('div'); div.className='rev-item';
+    const ans=it.chosen>=0?`${LETTERS[it.chosen]}. ${it.c[it.chosen]}`:'(Timed out)';
+    div.innerHTML=`<div class="ri-q">Q${i+1}. ${it.q}</div>
+      <div class="ri-row"><span class="ri-m">Your answer:</span><span class="${it.ok?'ri-c':'ri-w'}">${it.ok?'✅':'❌'} ${ans}</span></div>
+      ${!it.ok?`<div class="ri-row"><span class="ri-m">Correct answer:</span><span class="ri-c">${LETTERS[it.correct]}. ${it.c[it.correct]}</span></div>`:''}`;
+    rl.appendChild(div);
+  });
+  document.getElementById('rev-toggle').classList.remove('open');
+  document.getElementById('rev-list').classList.remove('show');
+  showScreen('screen-result');
+}
+
+function toggleReview(){
+  document.getElementById('rev-toggle').classList.toggle('open');
+  document.getElementById('rev-list').classList.toggle('show');
+}
+function backToStudentHome(){
+  selectedSubject=null; selectedDiff=null;
+  document.querySelectorAll('.subject-card').forEach(c=>c.classList.remove('selected'));
+  const btn=document.getElementById('quiz-next-btn');
+  btn.disabled=true; btn.textContent='Choose Difficulty →';
+  loadStudentHome(); showScreen('screen-student');
+}
+function retryQuiz(){ goDiffScreen() }
+
+/* ── UTILS ── */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+function esc(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML;}
+</script>
+</body>
+</html>
